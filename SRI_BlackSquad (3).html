@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SRI – Sentinel Reconnaissance Intelligence | BLACK-SQUAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#03060f;--bg2:#050a18;--bg3:#070d1e;
+  --s1:#0c1525;--s2:#0f1d30;
+  --c1:#00e5ff;--c2:#ff1744;--c3:#d500f9;--c4:#ffab00;--c5:#00e676;
+  --t1:#eaf4ff;--t2:#8bb4d4;--t3:#3d6888;
+  --g1:rgba(0,229,255,.1);--g2:rgba(255,23,68,.08);--g3:rgba(213,0,249,.09);
+  --glow1:0 0 32px rgba(0,229,255,.45),0 0 80px rgba(0,229,255,.1);
+  --glow2:0 0 32px rgba(255,23,68,.45),0 0 80px rgba(255,23,68,.1);
+  --glow3:0 0 32px rgba(213,0,249,.45);
+  --border:rgba(0,229,255,.09);--border2:rgba(0,229,255,.3);
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'Rajdhani',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --font-ui:'Space Grotesk',sans-serif;
+}
+[data-theme="light"]{
+  --bg:#f2f6fc;--bg2:#e8eef8;--bg3:#dde6f2;
+  --s1:#ffffff;--s2:#eef3fb;
+  --c1:#0057b8;--c2:#c4001a;--c3:#8b00cc;--c4:#c77a00;--c5:#007a35;
+  --t1:#05111f;--t2:#1a3d60;--t3:#456b8a;
+  --g1:rgba(0,87,184,.08);--g2:rgba(196,0,26,.07);--g3:rgba(139,0,204,.08);
+  --glow1:0 4px 28px rgba(0,87,184,.22),0 1px 0 rgba(0,87,184,.15);
+  --glow2:0 4px 28px rgba(196,0,26,.22);--glow3:0 4px 28px rgba(139,0,204,.2);
+  --border:rgba(0,87,184,.14);--border2:rgba(0,87,184,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t1);font-family:var(--font-body);overflow-x:hidden;cursor:none;line-height:1}
+
+/* ===CURSOR=== */
+.cur{position:fixed;width:12px;height:12px;background:var(--c1);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);box-shadow:var(--glow1);mix-blend-mode:screen;transition:width .18s,height .18s,background .2s}
+.cur-ring{position:fixed;width:38px;height:38px;border:1.5px solid rgba(0,229,255,.5);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:transform .1s,border-color .25s,width .3s,height .3s}
+[data-theme="light"] .cur{mix-blend-mode:multiply}
+
+/* ===THREE BG=== */
+#three-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ===GRID=== */
+.grid-ov{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:70px 70px}
+[data-theme="light"] .grid-ov{background-image:linear-gradient(rgba(0,87,184,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,87,184,.04) 1px,transparent 1px)}
+
+/* ===NOISE=== */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+[data-theme="light"] body::after{opacity:.018}
+
+
+
+/* ===NAV=== */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(3,6,15,.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+[data-theme="light"] nav{background:rgba(242,246,252,.9)}
+.nav-brand{display:flex;align-items:center;gap:12px}
+.nav-logo-txt{font-family:var(--font-display);font-size:28px;letter-spacing:6px;color:var(--c1);line-height:1;text-shadow:var(--glow1)}
+.nav-logo-squad{font-family:var(--font-mono);font-size:8px;color:var(--t3);letter-spacing:3px;text-transform:uppercase;display:block;margin-top:-2px}
+.nav-divider{width:1px;height:28px;background:var(--border);margin:0 4px}
+.nav-links{display:flex;gap:22px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--t2);font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;transition:color .2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--c1);transition:width .3s}
+.nav-links a:hover{color:var(--c1)}.nav-links a:hover::after{width:100%}
+.nav-acts{display:flex;align-items:center;gap:8px}
+.btn-theme{background:var(--s1);border:1px solid var(--border2);color:var(--c1);width:34px;height:34px;border-radius:7px;cursor:none;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.btn-theme:hover{box-shadow:var(--glow1)}
+.btn-nav{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;transition:all .25s;cursor:none;border:1px solid}
+.btn-nav.c1{color:var(--c1);border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.05)}
+.btn-nav.c1:hover{background:rgba(0,229,255,.12);box-shadow:var(--glow1)}
+.btn-nav.c5{color:var(--c5);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.05)}
+.btn-nav.c5:hover{background:rgba(0,230,118,.12)}
+
+/* ===HERO=== */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 44px 60px;text-align:center;z-index:3;overflow:hidden}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(140px);pointer-events:none}
+.ho1{width:700px;height:700px;background:radial-gradient(circle,rgba(0,229,255,.07),transparent 70%);top:5%;left:2%;animation:orbF 14s ease-in-out infinite}
+.ho2{width:500px;height:500px;background:radial-gradient(circle,rgba(255,23,68,.06),transparent 70%);top:20%;right:2%;animation:orbF 17s 2s ease-in-out infinite reverse}
+.ho3{width:400px;height:400px;background:radial-gradient(circle,rgba(213,0,249,.05),transparent 70%);bottom:10%;left:25%;animation:orbF 21s 4s ease-in-out infinite}
+@keyframes orbF{0%,100%{transform:translate(0,0)}30%{transform:translate(50px,-40px)}60%{transform:translate(-30px,50px)}}
+
+/* RINGS */
+.ring-ctr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.ring{position:absolute;border-radius:50%;animation:spinR linear infinite}
+.rg1{width:680px;height:680px;border:1px solid rgba(0,229,255,.04);animation-duration:70s}
+.rg2{width:480px;height:480px;border:1px solid rgba(255,23,68,.035);animation-duration:40s;animation-direction:reverse}
+.rg3{width:280px;height:280px;border:1px solid rgba(213,0,249,.06);animation-duration:28s}
+.rg4{width:140px;height:140px;border:1px solid rgba(0,229,255,.11);animation-duration:16s;animation-direction:reverse}
+@keyframes spinR{to{transform:rotate(360deg)}}
+.rg1::after,.rg3::after{content:'';position:absolute;width:5px;height:5px;background:var(--c1);border-radius:50%;top:-2.5px;left:50%;transform:translateX(-50%);box-shadow:var(--glow1)}
+.rg2::after{content:'';position:absolute;width:4px;height:4px;background:var(--c2);border-radius:50%;bottom:-2px;right:50%;box-shadow:var(--glow2)}
+
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--border2);border-radius:100px;padding:7px 20px;font-family:var(--font-mono);font-size:9px;letter-spacing:4px;color:var(--c1);text-transform:uppercase;background:rgba(0,229,255,.04);margin-bottom:22px;animation:fadeUp .8s ease both}
+.blink{width:6px;height:6px;background:var(--c2);border-radius:50%;box-shadow:0 0 10px var(--c2);animation:blink 1.3s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.hero-title{font-family:var(--font-display);font-size:clamp(52px,9vw,120px);line-height:.88;margin-bottom:4px;animation:fadeUp .7s .1s ease both;letter-spacing:2px}
+.ht-ghost{display:block;color:transparent;-webkit-text-stroke:1px var(--c1);opacity:.3;font-size:.44em;letter-spacing:12px}
+.ht-main{display:block;background:linear-gradient(90deg,var(--c1) 0%,var(--c3) 50%,var(--c2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 40px rgba(0,229,255,.25))}
+.ht-sub{display:block;font-family:var(--font-mono);font-size:.16em;letter-spacing:7px;color:var(--t2);font-weight:400;margin-top:8px}
+
+.hero-desc{font-family:var(--font-ui);font-size:15px;color:var(--t2);max-width:580px;margin:22px auto 0;line-height:1.75;animation:fadeUp .8s .18s ease both;font-weight:400}
+
+.achieve-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0;animation:fadeUp .8s .24s ease both}
+.chip-ac{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:100px;font-family:var(--font-mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;border:1px solid;font-weight:500}
+.ca-g{color:var(--c5);border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.07)}
+.ca-a{color:var(--c4);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.07)}
+.ca-p{color:var(--c3);border-color:rgba(213,0,249,.4);background:rgba(213,0,249,.07)}
+.ca-b{color:var(--c1);border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.05)}
+
+.hero-stats{display:flex;justify-content:center;gap:0;margin:30px auto;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:rgba(0,0,0,.3);backdrop-filter:blur(14px);max-width:720px;animation:fadeUp .8s .28s ease both}
+.hs{flex:1;padding:20px 12px;text-align:center;border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background .3s;cursor:default}
+.hs:last-child{border-right:none}
+.hs::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--hc,var(--c1));opacity:0;transition:opacity .3s}
+.hs:hover{background:rgba(0,229,255,.02)}.hs:hover::before{opacity:1}
+.hsn{font-family:var(--font-display);font-size:30px;color:var(--hc,var(--c1));text-shadow:0 0 20px currentColor;line-height:1}
+.hsl{font-family:var(--font-mono);font-size:7px;color:var(--t3);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
+
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s .34s ease both}
+.btn-hero{display:inline-flex;align-items:center;gap:7px;padding:13px 28px;border-radius:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;cursor:none;transition:all .3s;border:1px solid}
+.bh-main{background:transparent;border-color:var(--c1);color:var(--c1);position:relative;overflow:hidden}
+.bh-main::before{content:'';position:absolute;inset:0;background:var(--c1);transform:translateY(100%);transition:transform .3s}
+.bh-main span{position:relative;z-index:1;transition:color .3s}
+.bh-main:hover::before{transform:translateY(0)}.bh-main:hover span{color:#000}
+.bh-red{border-color:rgba(255,23,68,.4);color:var(--c2);background:rgba(255,23,68,.06)}
+.bh-red:hover{box-shadow:var(--glow2);background:rgba(255,23,68,.15)}
+.bh-grn{border-color:rgba(0,230,118,.4);color:var(--c5);background:rgba(0,230,118,.05)}
+.bh-grn:hover{background:rgba(0,230,118,.14)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* ===SECTION BASE=== */
+section{position:relative;z-index:3;padding:80px 44px;max-width:1240px;margin:0 auto}
+.sec-chip{display:inline-flex;align-items:center;gap:7px;background:var(--g1);border:1px solid var(--border2);border-radius:100px;padding:5px 14px;font-family:var(--font-mono);font-size:8px;letter-spacing:4px;text-transform:uppercase;color:var(--c1);margin-bottom:10px}
+.sec-chip.r{color:var(--c2);background:var(--g2);border-color:rgba(255,23,68,.3)}
+.sec-chip.p{color:var(--c3);background:var(--g3);border-color:rgba(213,0,249,.3)}
+.sec-chip.g{color:var(--c5);background:rgba(0,230,118,.07);border-color:rgba(0,230,118,.3)}
+.sec-chip.a{color:var(--c4);background:rgba(255,171,0,.07);border-color:rgba(255,171,0,.3)}
+.sh{font-family:var(--font-display);font-size:clamp(28px,4vw,52px);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;line-height:1}
+.sp{font-family:var(--font-ui);color:var(--t2);font-size:14px;max-width:560px;line-height:1.75;margin-bottom:44px}
+.hr-g{height:1px;background:linear-gradient(90deg,transparent,var(--c1),transparent);opacity:.2;position:relative;z-index:3}
+
+/* ===PIPELINE=== */
+.pipe4{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(0,0,0,.2);backdrop-filter:blur(12px)}
+.p4{padding:22px 16px;border-right:1px solid var(--border);position:relative;transition:background .3s}
+.p4:last-child{border-right:none}
+.p4:hover{background:rgba(0,229,255,.02)}
+.p4h{font-family:var(--font-display);font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--c1);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.p4h.r{color:var(--c2)}.p4h.p{color:var(--c3)}.p4h.a{color:var(--c4)}
+.p4i{display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;font-family:var(--font-ui);font-size:11px;color:var(--t2);line-height:1.5}
+.p4i::before{content:'›';color:var(--c1);font-size:14px;line-height:1.1;flex-shrink:0}
+.p4.r .p4i::before{color:var(--c2)}.p4.p .p4i::before{color:var(--c3)}.p4.a .p4i::before{color:var(--c4)}
+
+/* ===CARDS=== */
+.cards3{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px}
+.c3d{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;overflow:hidden;cursor:none}
+.c3d.r{border-left:2px solid var(--c2)}
+.c3d.p{border-left:2px solid var(--c3)}
+.c3d.a{border-left:2px solid var(--c4)}
+.c3d.g{border-left:2px solid var(--c5)}
+.cico{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;border:1px solid var(--border);background:rgba(0,229,255,.04)}
+.cname{font-family:var(--font-display);font-size:14px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;color:var(--cc,var(--c1))}
+.cdesc{font-family:var(--font-ui);font-size:11px;color:var(--t2);line-height:1.65;margin-bottom:12px}
+.cnum{font-family:var(--font-display);font-size:40px;color:var(--cc,var(--c1));text-shadow:0 0 20px currentColor;line-height:1}
+.cnlbl{font-family:var(--font-mono);font-size:8px;color:var(--t3);letter-spacing:2px}
+
+/* ===ARCH=== */
+.arch-g{display:grid;grid-template-columns:1fr 1.2fr;gap:32px;align-items:start}
+@media(max-width:900px){.arch-g{grid-template-columns:1fr}}
+.astack{display:flex;flex-direction:column;gap:8px}
+.aitem{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--s1);border:1px solid var(--border);border-radius:8px;transition:all .3s;cursor:default}
+.aitem:hover{border-color:var(--border2);transform:translateX(5px);box-shadow:var(--glow1)}
+.an{font-family:var(--font-mono);font-size:9px;color:var(--c1);min-width:24px;letter-spacing:1px}
+.at{font-family:var(--font-display);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.ad{font-family:var(--font-ui);font-size:10px;color:var(--t3);line-height:1.45}
+.atag{font-family:var(--font-mono);font-size:7px;padding:2px 8px;border-radius:3px;border:1px solid var(--border2);color:var(--c1);letter-spacing:1px;white-space:nowrap}
+.flow-box{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.flow-ttl{padding:12px 16px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:8px;letter-spacing:3px;color:var(--c1);text-transform:uppercase}
+.flow-body{padding:16px;display:flex;flex-direction:column;gap:5px}
+.frow{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;background:rgba(0,0,0,.18);border:1px solid transparent;transition:all .25s}
+.frow:hover{border-color:var(--border2);background:rgba(0,229,255,.02)}
+.fn{font-family:var(--font-mono);font-size:8px;width:22px;height:22px;border-radius:50%;border:1px solid var(--c1);display:flex;align-items:center;justify-content:center;color:var(--c1);flex-shrink:0}
+.fn.r{color:var(--c2);border-color:var(--c2)}.fn.p{color:var(--c3);border-color:var(--c3)}
+.ft{font-family:var(--font-ui);font-size:11px;color:var(--t2)}.ft strong{color:var(--c1)}
+
+/* ===PERF=== */
+.perf-r{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:30px}
+@media(max-width:800px){.perf-r{grid-template-columns:repeat(2,1fr)}}
+.pc{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:20px;text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.pc::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0,var(--pca,rgba(0,229,255,.05)),transparent 70%)}
+.pc:hover{transform:translateY(-5px);border-color:var(--pcl,var(--c1))}
+.pn{font-family:var(--font-display);font-size:44px;line-height:1;margin-bottom:3px}
+.pu{font-family:var(--font-mono);font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--t3);margin-bottom:3px}
+.pl{font-family:var(--font-ui);font-size:10px;color:var(--t2)}
+
+/* ===BARS=== */
+.charts-g{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:30px}
+@media(max-width:800px){.charts-g{grid-template-columns:1fr}}
+.cbox{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:24px}
+.cboxh{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--t3);margin-bottom:18px}
+.br{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.brl{font-family:var(--font-ui);font-size:10px;color:var(--t2);min-width:120px;text-align:right}
+.brt{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+[data-theme="light"] .brt{background:rgba(0,0,0,.08)}
+.brf{height:100%;border-radius:3px;width:0;transition:width 1.8s cubic-bezier(.25,.46,.45,.94)}
+.brv{font-family:var(--font-mono);font-size:9px;color:var(--t2);min-width:36px}
+.br.hi{padding:6px 8px;background:rgba(0,229,255,.04);border-radius:7px;border:1px solid rgba(0,229,255,.16)}
+.br.hi .brl,.br.hi .brv{color:var(--c1)}
+
+/* ===TABLE=== */
+.comp-w{overflow-x:auto;background:var(--s1);border:1px solid var(--border);border-radius:12px}
+.comp-t{width:100%;border-collapse:collapse;font-size:10px;min-width:640px}
+.comp-t th{text-align:center;padding:10px 8px;font-family:var(--font-mono);font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--border);background:rgba(0,0,0,.22)}
+[data-theme="light"] .comp-t th{background:rgba(0,0,0,.04)}
+.comp-t th:first-child{text-align:left}
+.comp-t td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.03);text-align:center;font-family:var(--font-ui);color:var(--t2);transition:background .2s}
+[data-theme="light"] .comp-t td{border-bottom:1px solid rgba(0,0,0,.05)}
+.comp-t td:first-child{text-align:left;color:var(--t1)}
+.comp-t tr:hover td{background:rgba(0,229,255,.02)}
+.comp-t tr.sri td{color:var(--c1);background:rgba(0,229,255,.04)}
+.comp-t tr.sri td:first-child{font-weight:700}
+.ck{color:var(--c5);font-size:14px}.cx{color:var(--c2);font-size:14px}.cp{color:var(--c4);font-size:10px}
+
+/* ===THREAT=== */
+.thr-r{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:30px}
+@media(max-width:700px){.thr-r{grid-template-columns:1fr}}
+.tc{border-radius:12px;padding:22px;border:1px solid transparent;position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.tc.hi{border-color:rgba(255,23,68,.3);background:rgba(255,23,68,.04)}
+.tc.md{border-color:rgba(255,171,0,.3);background:rgba(255,171,0,.04)}
+.tc.lo{border-color:rgba(0,229,255,.2);background:rgba(0,229,255,.03)}
+.tc:hover{transform:translateY(-5px)}
+.tind{width:8px;height:8px;border-radius:50%;margin-bottom:12px;box-shadow:0 0 10px currentColor}
+.tc.hi .tind{background:var(--c2);color:var(--c2)}.tc.md .tind{background:var(--c4);color:var(--c4)}.tc.lo .tind{background:var(--c1);color:var(--c1)}
+.tlvl{font-family:var(--font-display);font-size:15px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.tc.hi .tlvl{color:var(--c2)}.tc.md .tlvl{color:var(--c4)}.tc.lo .tlvl{color:var(--c1)}
+.tevt{font-family:var(--font-ui);font-size:11px;color:var(--t2);line-height:1.65}
+
+/* ===REDUCTION=== */
+.red3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+@media(max-width:700px){.red3{grid-template-columns:1fr}}
+.r3{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;transition:all .3s}
+.r3:hover{transform:scale(1.04)}
+.r3n{font-family:var(--font-display);font-size:56px;line-height:1;margin-bottom:6px}
+.r3l{font-family:var(--font-ui);font-size:11px;color:var(--t2)}
+
+/* ===TECH STACK=== */
+.tech-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:9px}
+.tch{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;transition:all .3s;cursor:default}
+.tch:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:var(--glow1)}
+.tcn{font-family:var(--font-mono);font-size:10px;color:var(--c1);margin-bottom:2px}
+.tcr{font-family:var(--font-ui);font-size:9px;color:var(--t3)}
+
+/* ===DEMO GRID=== */
+.demo-g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:800px){.demo-g{grid-template-columns:repeat(2,1fr)}}
+.dcard{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .4s;cursor:none}
+.dcard:hover{transform:translateY(-7px) scale(1.015);border-color:var(--border2);box-shadow:0 22px 55px rgba(0,0,0,.5)}
+.dvis{width:100%;aspect-ratio:16/10;position:relative;overflow:hidden;background:var(--s2)}
+.dov{position:absolute;inset:0;background:linear-gradient(to top,rgba(3,6,15,.92) 0%,transparent 55%);display:flex;align-items:flex-end;padding:10px}
+.dlbl{font-family:var(--font-display);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t1);background:rgba(0,0,0,.55);padding:3px 9px;border-radius:3px}
+.dbadge{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:3px;font-family:var(--font-mono);font-size:7px;font-weight:600;letter-spacing:1px}
+.db-a{background:rgba(0,230,118,.18);border:1px solid rgba(0,230,118,.5);color:var(--c5)}
+.db-r{background:rgba(255,23,68,.18);border:1px solid rgba(255,23,68,.5);color:var(--c2)}
+.db-w{background:rgba(255,171,0,.18);border:1px solid rgba(255,171,0,.5);color:var(--c4)}
+.ddesc{padding:11px 13px;font-family:var(--font-ui);font-size:11px;color:var(--t2);line-height:1.6}
+
+/* ===VIDEO PREVIEW=== */
+.vid-wrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);max-width:860px;margin:0 auto;aspect-ratio:16/9;transition:box-shadow .4s;background:#000}
+.vid-wrap:hover{box-shadow:0 0 80px rgba(0,229,255,.18),0 30px 80px rgba(0,0,0,.5)}
+.vid-wrap iframe{width:100%;height:100%;border:none;display:block}
+.vid-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(3,6,15,.9),rgba(7,13,30,.88));cursor:none;transition:opacity .3s}
+.vid-fallback.hidden{opacity:0;pointer-events:none}
+.vid-play-btn{width:72px;height:72px;border-radius:50%;border:2px solid var(--c2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--c2);transition:all .3s;animation:playPulse 2.5s ease-in-out infinite}
+@keyframes playPulse{0%,100%{box-shadow:0 0 30px rgba(255,23,68,.3),0 0 0 0 rgba(255,23,68,.3)}50%{box-shadow:0 0 30px rgba(255,23,68,.5),0 0 0 20px rgba(255,23,68,0)}}
+.vid-fallback:hover .vid-play-btn{transform:scale(1.1);background:rgba(255,23,68,.12)}
+.vid-t{font-family:var(--font-display);font-size:16px;letter-spacing:3px;color:var(--t1);margin-top:16px;text-align:center}
+.vid-s{font-family:var(--font-mono);font-size:8px;color:var(--t3);letter-spacing:2px;margin-top:4px}
+
+/* ===PUBLICATIONS=== */
+.pub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:32px}
+@media(max-width:900px){.pub-grid{grid-template-columns:1fr}}
+.pub-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:26px;transition:all .3s;position:relative;overflow:hidden;backdrop-filter:blur(8px)}
+.pub-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--pclr,var(--c1))}
+.pub-card:hover{transform:translateY(-4px);border-color:var(--border2);box-shadow:0 20px 55px rgba(0,0,0,.3)}
+.pub-type{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:100px;font-family:var(--font-mono);font-size:8px;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;border:1px solid}
+.pt-conf{color:var(--c3);border-color:rgba(213,0,249,.4);background:rgba(213,0,249,.08)}
+.pt-pat{color:var(--c4);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.08)}
+.pt-conf2{color:var(--c5);border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.08)}
+.pub-title{font-family:var(--font-display);font-size:14px;letter-spacing:.5px;line-height:1.35;margin-bottom:9px;color:var(--t1);text-transform:uppercase}
+.pub-authors{font-family:var(--font-mono);font-size:9px;color:var(--t3);line-height:1.6;margin-bottom:10px}
+.pub-venue{font-family:var(--font-ui);font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:14px}
+.pub-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.pbadge{padding:2px 9px;border-radius:3px;font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:1px}
+.pb-acc{background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:var(--c5)}
+.pb-ieee{background:rgba(213,0,249,.12);border:1px solid rgba(213,0,249,.4);color:var(--c3)}
+.pb-ind{background:rgba(255,171,0,.12);border:1px solid rgba(255,171,0,.4);color:var(--c4)}
+.pub-btn{display:inline-flex;align-items:center;gap:5px;text-decoration:none;font-family:var(--font-mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:7px 14px;border-radius:5px;border:1px solid;transition:all .3s;cursor:none}
+.pb-dl{color:var(--c5);border-color:rgba(0,230,118,.4)}
+.pb-dl:hover{background:rgba(0,230,118,.1);box-shadow:0 0 20px rgba(0,230,118,.2)}
+.pb-ext{color:var(--c3);border-color:rgba(213,0,249,.4)}
+.pb-ext:hover{background:rgba(213,0,249,.1)}
+.pb-reg{color:var(--c1);border-color:rgba(0,229,255,.4)}
+.pb-reg:hover{background:rgba(0,229,255,.1);box-shadow:var(--glow1)}
+
+/* ===ACCEPTANCE BOX=== */
+.acc-box{background:linear-gradient(135deg,rgba(0,230,118,.05),rgba(0,230,118,.02));border:1px solid rgba(0,230,118,.35);border-radius:14px;padding:28px;position:relative;overflow:hidden;margin-top:16px}
+.acc-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c5)}
+.acc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.acc-title{font-family:var(--font-display);font-size:16px;letter-spacing:1px;color:var(--c5);text-transform:uppercase}
+.acc-badge{background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.5);color:var(--c5);padding:4px 12px;border-radius:100px;font-family:var(--font-mono);font-size:8px;letter-spacing:3px;font-weight:600;white-space:nowrap}
+.acc-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+@media(max-width:700px){.acc-meta{grid-template-columns:1fr}}
+.acc-m{background:rgba(0,0,0,.2);border:1px solid rgba(0,230,118,.12);border-radius:7px;padding:10px 13px}
+[data-theme="light"] .acc-m{background:rgba(0,0,0,.03)}
+.acc-mk{font-family:var(--font-mono);font-size:7px;color:var(--c5);letter-spacing:3px;text-transform:uppercase;margin-bottom:3px}
+.acc-mv{font-family:var(--font-ui);font-size:11px;color:var(--t2)}
+
+/* ICETM USA card */
+.icetm-box{background:linear-gradient(135deg,rgba(0,229,255,.05),rgba(213,0,249,.04));border:1px solid var(--border2);border-radius:14px;padding:28px;position:relative;overflow:hidden;margin-top:16px}
+.icetm-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--c1),var(--c3))}
+.icetm-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.icetm-badge{background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(213,0,249,.12));border:1px solid var(--border2);color:var(--c1);padding:5px 14px;border-radius:100px;font-family:var(--font-mono);font-size:8px;letter-spacing:3px;font-weight:600}
+.icetm-flag{font-size:22px}
+
+/* ===FEASIBILITY=== */
+.feas-g{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+@media(max-width:900px){.feas-g{grid-template-columns:1fr}}
+.ctbl{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ctbl-h{display:grid;grid-template-columns:1fr 1.5fr;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.24)}
+[data-theme="light"] .ctbl-h{background:rgba(0,0,0,.04)}
+.ctbl-hd{font-family:var(--font-mono);font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--t3)}
+.ctbl-r{display:grid;grid-template-columns:1fr 1.5fr;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .2s}
+[data-theme="light"] .ctbl-r{border-bottom:1px solid rgba(0,0,0,.04)}
+.ctbl-r:last-child{border-bottom:none}
+.ctbl-r:hover{background:rgba(0,229,255,.02)}
+.ctbl-c{font-family:var(--font-ui);font-size:10px;color:var(--c2);font-weight:600}
+.ctbl-s{font-family:var(--font-ui);font-size:10px;color:var(--t2)}
+.fn-g{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.fnc{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;transition:all .3s}
+.fnc:hover{transform:scale(1.03);border-color:var(--border2)}
+.fnn{font-family:var(--font-display);font-size:34px;line-height:1}
+.fnl{font-family:var(--font-ui);font-size:10px;color:var(--t2);margin-top:3px;line-height:1.4}
+
+/* ===TEAM=== */
+.team-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:13px}
+.team-c{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;transition:all .3s;cursor:default}
+.team-c:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:var(--glow1)}
+.team-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:18px;color:#000;margin:0 auto 12px;box-shadow:var(--glow1)}
+.team-n{font-family:var(--font-display);font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;color:var(--t1)}
+.team-r{font-family:var(--font-mono);font-size:8px;color:var(--c1);letter-spacing:2px;margin-bottom:2px}
+.team-id{font-family:var(--font-mono);font-size:8px;color:var(--t3);letter-spacing:1px}
+.team-lead-badge{display:inline-block;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.35);color:var(--c1);padding:2px 8px;border-radius:3px;font-family:var(--font-mono);font-size:7px;letter-spacing:2px;margin-top:4px}
+.mentor-b{background:linear-gradient(135deg,rgba(0,229,255,.04),rgba(213,0,249,.04));border:1px solid var(--border2);border-radius:12px;padding:24px;display:flex;align-items:center;gap:18px;margin-bottom:28px;flex-wrap:wrap}
+.mentor-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--c3),var(--c2));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:18px;color:#fff;box-shadow:var(--glow3);flex-shrink:0}
+.mentor-n{font-family:var(--font-display);font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--t1)}
+.mentor-t{font-family:var(--font-mono);font-size:9px;color:var(--c3);letter-spacing:2px;margin-top:3px}
+.mentor-d{font-family:var(--font-ui);font-size:11px;color:var(--t3);margin-top:3px}
+.guide-badge-hod{display:inline-block;background:rgba(213,0,249,.12);border:1px solid rgba(213,0,249,.4);color:var(--c3);padding:3px 10px;border-radius:3px;font-family:var(--font-mono);font-size:7px;letter-spacing:2px;margin-top:5px}
+
+/* ===USP / CONCLUSION=== */
+.usp-b{background:linear-gradient(135deg,rgba(0,229,255,.04),rgba(213,0,249,.04));border:1px solid var(--border2);border-radius:16px;padding:44px;text-align:center;position:relative;overflow:hidden}
+.usp-b::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0,rgba(0,229,255,.07),transparent 60%);pointer-events:none}
+.usp-t{font-family:var(--font-display);font-size:clamp(24px,3.5vw,44px);text-transform:uppercase;letter-spacing:4px;background:linear-gradient(90deg,var(--c1),var(--c3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.usp-s{font-family:var(--font-ui);font-size:13px;color:var(--t2);max-width:640px;margin:0 auto 26px;line-height:1.8}
+.channels{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:11px;margin-top:30px}
+.chi{display:flex;align-items:center;gap:8px;padding:11px 13px;background:var(--s1);border:1px solid var(--border);border-radius:8px;font-family:var(--font-ui);font-size:11px;color:var(--t2);transition:all .3s}
+.chi:hover{border-color:var(--c5);color:var(--c5);transform:translateX(4px)}
+.cdot{width:5px;height:5px;border-radius:50%;background:var(--c5);box-shadow:0 0 7px var(--c5);flex-shrink:0}
+
+/* ===FOOTER=== */
+footer{position:relative;z-index:3;border-top:1px solid var(--border);padding:40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.ft-b{font-family:var(--font-display);font-size:24px;letter-spacing:6px;color:var(--c1);text-shadow:var(--glow1)}
+.ft-i{font-family:var(--font-mono);font-size:8px;color:var(--t3);line-height:2;letter-spacing:1px;margin-top:5px}
+.ft-ls{display:flex;gap:8px;flex-wrap:wrap}
+.ftl{display:inline-flex;align-items:center;gap:5px;color:var(--c1);text-decoration:none;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;border:1px solid var(--border2);padding:7px 14px;border-radius:5px;transition:all .2s;cursor:none}
+.ftl:hover{background:rgba(0,229,255,.07);box-shadow:var(--glow1)}
+.ftl.r{color:var(--c2);border-color:rgba(255,23,68,.35)}.ftl.r:hover{background:rgba(255,23,68,.07)}
+.ftl.g{color:var(--c5);border-color:rgba(0,230,118,.35)}.ftl.g:hover{background:rgba(0,230,118,.07)}
+
+/* build progress */
+.prog-wrap{margin-top:16px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px}
+.prog-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;color:var(--c5);text-transform:uppercase;margin-bottom:10px}
+.prog-bar-track{flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+[data-theme="light"] .prog-bar-track{background:rgba(0,0,0,.08)}
+.prog-bar-fill{width:0;height:100%;background:linear-gradient(90deg,var(--c5),var(--c1));border-radius:3px;transition:width 2s .4s ease}
+.prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px}
+.prog-item{font-family:var(--font-ui);font-size:10px;display:flex;align-items:center;gap:5px}
+
+/* ===SCROLL=== */
+.scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:7px;color:var(--t3);font-family:var(--font-mono);font-size:7px;letter-spacing:4px;text-transform:uppercase;animation:fadeUp 1s 1s ease both}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,transparent,var(--c1));animation:scrollB 2.2s ease-in-out infinite}
+@keyframes scrollB{0%,100%{opacity:.3;transform:scaleY(.5)}50%{opacity:1;transform:scaleY(1)}}
+
+
+
+/* CORNER BRACKETS */
+.corner-brackets{position:absolute;inset:0;pointer-events:none}
+.cb-tl,.cb-tr,.cb-bl,.cb-br{position:absolute;width:14px;height:14px}
+.cb-tl{top:6px;left:6px;border-top:1px solid var(--c1);border-left:1px solid var(--c1)}
+.cb-tr{top:6px;right:6px;border-top:1px solid var(--c1);border-right:1px solid var(--c1)}
+.cb-bl{bottom:6px;left:6px;border-bottom:1px solid var(--c1);border-left:1px solid var(--c1)}
+.cb-br{bottom:6px;right:6px;border-bottom:1px solid var(--c1);border-right:1px solid var(--c1)}
+
+/* FLOATING DATA LABELS on demo */
+.float-data{position:absolute;font-family:var(--font-mono);font-size:7px;color:rgba(0,229,255,.8);background:rgba(0,0,0,.65);padding:2px 6px;border:1px solid rgba(0,229,255,.3);border-radius:2px;animation:floatLbl 2s ease-in-out infinite}
+@keyframes floatLbl{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+</style>
+</head>
+<body>
+
+<!-- THREE.JS CANVAS -->
+<canvas id="three-bg"></canvas>
+<div class="grid-ov"></div>
+
+<!-- CURSOR -->
+<div class="cur" id="cur"></div>
+<div class="cur-ring" id="curR"></div>
+
+
+<!-- ===NAV=== -->
+<nav>
+  <div class="nav-brand">
+    <div>
+      <div class="nav-logo-txt">BLACK-SQUAD</div>
+      <span class="nav-logo-squad">SRI · NEC · CSE</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#modules">Modules</a></li>
+    <li><a href="#arch">Arch</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#pub">Research</a></li>
+    <li><a href="#team">Team</a></li>
+  </ul>
+  <div class="nav-acts">
+    <button class="btn-theme" id="themeBtn" title="Toggle theme">☾</button>
+    <a href="https://drive.google.com/uc?export=download&id=1BN3e21Y2Mh1LeFeP-B4ff0rYRPCLoRgh" target="_blank" class="btn-nav c5">↓ Paper</a>
+    <a href="https://github.com/Naveenkumar7125/SRI-V1.git" target="_blank" class="btn-nav c1">⟨/⟩ GitHub</a>
+  </div>
+</nav>
+
+<!-- ===HERO=== -->
+<div style="position:relative;overflow:hidden">
+  <div class="hero" id="home">
+    <div class="hero-orb ho1"></div><div class="hero-orb ho2"></div><div class="hero-orb ho3"></div>
+    <div class="ring-ctr"><div class="ring rg1"></div><div class="ring rg2"></div><div class="ring rg3"></div><div class="ring rg4"></div></div>
+
+    <div style="position:relative;z-index:4">
+      <div class="hero-eyebrow"><div class="blink"></div>Team BLACK-SQUAD · Nandha Engineering College · CSE</div>
+
+      <h1 class="hero-title">
+        <span class="ht-ghost">Sentinel</span>
+        <span class="ht-main">Reconnaissance</span>
+        <span class="ht-sub">Intelligence</span>
+      </h1>
+
+      <p class="hero-desc">AI & ML enabled video analysis and interpretation — multi-modal, real-time, microservice-powered surveillance intelligence by Nandha Engineering College, CSE.</p>
+
+      <div class="achieve-row">
+        <div class="chip-ac ca-g">✓ IEEE ICC-CNS 2026 Accepted</div>
+        <div class="chip-ac ca-a">⚑ Indian Patent 202541120600</div>
+        <div class="chip-ac ca-p">✓ ICETM 2026 · Amity USA Accepted</div>
+        <div class="chip-ac ca-b">◈ AI Surveillance Research</div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hs" style="--hc:var(--c1)"><div class="hsn" id="cnt1">0%</div><div class="hsl">Face Accuracy</div></div>
+        <div class="hs" style="--hc:var(--c2)"><div class="hsn" id="cnt2">0%</div><div class="hsl">Weapon mAP</div></div>
+        <div class="hs" style="--hc:var(--c3)"><div class="hsn" id="cnt3">0×</div><div class="hsl">Speed Gain</div></div>
+        <div class="hs" style="--hc:var(--c4)"><div class="hsn" id="cnt4">0%</div><div class="hsl">Compute Saved</div></div>
+        <div class="hs" style="--hc:var(--c5)"><div class="hsn" id="cnt5">0%</div><div class="hsl">Build Progress</div></div>
+      </div>
+
+      <div class="hero-cta">
+        <a href="#solution" class="btn-hero bh-main"><span>Explore System</span></a>
+        <a href="https://drive.google.com/file/d/1MlKUnSbQMJxmS6oi0cq0jXCrocd5IgAY/view?usp=sharing" target="_blank" class="btn-hero bh-red">▶ Watch Demo</a>
+        <a href="https://drive.google.com/uc?export=download&id=1BN3e21Y2Mh1LeFeP-B4ff0rYRPCLoRgh" target="_blank" class="btn-hero bh-grn">↓ Download Paper</a>
+        <a href="https://github.com/Naveenkumar7125/SRI-V1.git" target="_blank" class="btn-hero bh-main" style="border-color:var(--c3);color:var(--c3)"><span>GitHub Repo</span></a>
+      </div>
+    </div>
+    <div class="scroll-hint">Scroll<div class="scroll-line"></div></div>
+  </div>
+</div>
+
+<div class="hr-g"></div>
+
+<!-- ===PIPELINE=== -->
+<section id="solution">
+  <div class="sec-chip reveal">Proposed Solution</div>
+  <h2 class="sh reveal">INGEST → DETECT → SUMMARIZE → RESPOND</h2>
+  <p class="sp reveal">Four-stage autonomous pipeline processing multi-source video streams from CCTV cameras, drones, body cams, and ground robots into prioritized intelligence.</p>
+
+  <div class="pipe4 reveal">
+    <div class="p4">
+      <div class="p4h">📡 Ingest</div>
+      <div class="p4i">CCTV cameras</div><div class="p4i">Drone cameras</div><div class="p4i">Body cam</div>
+      <div class="p4i">Vehicle-mounted cameras</div><div class="p4i">Ground robots</div>
+      <div style="margin-top:11px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);border:1px solid var(--border);padding:2px 7px;border-radius:3px;display:inline-block">MP4·AVI·MOV·MKV</span>
+        <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);border:1px solid var(--border);padding:2px 7px;border-radius:3px;display:inline-block">JPG·PNG·JSON·CSV</span>
+      </div>
+    </div>
+    <div class="p4 r">
+      <div class="p4h r">🔍 Detect</div>
+      <div class="p4i">Facial Recognition (MTCNN + InceptionResNetV1)</div>
+      <div class="p4i">Weapon Detection (YOLOv8)</div>
+      <div class="p4i">Behavioral Anomaly (LSTM + rule-based)</div>
+      <div class="p4i">Temporal / Activity Anomaly Detection</div>
+      <div class="p4i">Multi-object Tracking & Segmentation</div>
+    </div>
+    <div class="p4 p">
+      <div class="p4h p">🧠 Summarize</div>
+      <div class="p4i">Event Abstraction</div><div class="p4i">Object & Entity Indexing</div>
+      <div class="p4i">Activity Aggregation</div><div class="p4i">Spatial Heatmapping</div>
+      <div class="p4i">Threat Intelligence Summarization (LLM)</div>
+    </div>
+    <div class="p4 a">
+      <div class="p4h a">🚨 Respond</div>
+      <div class="p4i">Real-Time Threat Alerts</div><div class="p4i">Priority Classification</div>
+      <div class="p4i">AI Agent Commands</div><div class="p4i">Evidence Archiving</div>
+      <div class="p4i">Adaptive Feedback Loop</div>
+    </div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===MODULES=== -->
+<section id="modules">
+  <div class="sec-chip reveal">Detection Modules</div>
+  <h2 class="sh reveal">Seven AI Microservices</h2>
+  <p class="sp reveal">Each module runs as an independent Python microservice communicating via REST APIs. Simultaneous parallel execution on GPU-enabled hardware.</p>
+
+  <div class="cards3">
+    <div class="c3d reveal" data-tilt>
+      <div class="scan-line"></div>
+      <div class="cico">👤</div>
+      <div class="cname">Face Recognition</div>
+      <div class="cdesc">MTCNN + InceptionResNetV1 on VGGFace2. 512-dim embeddings, L2 normalization, triplet loss. Cosine similarity threshold 0.8. Privacy-preserving anonymization for non-targets.</div>
+      <div class="cnum">98%</div><div class="cnlbl">recognition accuracy</div>
+    </div>
+    <div class="c3d r reveal" data-tilt>
+      <div class="scan-line"></div>
+      <div class="cico">🔫</div>
+      <div class="cname">Weapon Detection</div>
+      <div class="cdesc">Custom YOLOv8 trained on 10,000 annotated images. Detects firearms, knives across 70 epochs. Confidence threshold 0.7. Transfer learning + augmentation.</div>
+      <div class="cnum">92.8%</div><div class="cnlbl">mAP@0.5 score</div>
+    </div>
+    <div class="c3d p reveal" data-tilt>
+      <div class="scan-line"></div>
+      <div class="cico">🚨</div>
+      <div class="cname">Behavior Anomaly</div>
+      <div class="cdesc">YOLOv8 + OpenCV pose estimation + LSTM rule-based temporal reasoning. Detects violence, kidnapping, loitering. 3,500 labeled frames. F1: 89.7%, precision 91.3%.</div>
+      <div class="cnum">89.7</div><div class="cnlbl">F1 score</div>
+    </div>
+    <div class="c3d a reveal" data-tilt>
+      <div class="scan-line"></div>
+      <div class="cico">👥</div>
+      <div class="cname">Crowd Congestion</div>
+      <div class="cdesc">YOLOv8 person detection + DBSCAN centroid clustering. 5-stage pipeline: detection → centroid extraction → clustering → classification → alerts.</div>
+      <div class="cnum">92.4%</div><div class="cnlbl">classification accuracy</div>
+    </div>
+    <div class="c3d g reveal" data-tilt>
+      <div class="scan-line"></div>
+      <div class="cico">⏱</div>
+      <div class="cname">Temporal Anomaly</div>
+      <div class="cdesc">LSTM-based temporal analysis for fire, accident, and crime sequences. Sliding time-window motion intensity assessment. Anomaly-driven segmentation removes redundant frames.</div>
+      <div class="cnum">LSTM</div><div class="cnlbl">temporal model</div>
+    </div>
+    <div class="c3d reveal" data-tilt style="--cc:var(--c4)">
+      <div class="scan-line" style="background:linear-gradient(90deg,transparent,rgba(255,171,0,.6),transparent)"></div>
+      <div class="cico">🤖</div>
+      <div class="cname">AI Agent System</div>
+      <div class="cdesc">Autonomous LangChain agent dispatches prioritized alerts via TTS, mobile API, notification service. LLM generates structured incident reports. Adaptive feedback loop retrains models.</div>
+      <div class="cnum">LLM</div><div class="cnlbl">langchain powered</div>
+    </div>
+    <div class="c3d reveal" data-tilt style="--cc:#06b6d4">
+      <div class="scan-line" style="background:linear-gradient(90deg,transparent,rgba(6,182,212,.6),transparent)"></div>
+      <div class="cico">📊</div>
+      <div class="cname">Threat Fusion Engine</div>
+      <div class="cdesc">Decision fusion layer: ThreatScore = w₁F + w₂W + w₃B + w₄C. Empirically weighted per environment. Eliminates false positives through multi-modal cross-validation.</div>
+      <div class="cnum">4-mod</div><div class="cnlbl">fusion scoring</div>
+    </div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===ARCH=== -->
+<section id="arch">
+  <div class="sec-chip p reveal">System Architecture</div>
+  <h2 class="sh reveal">Technical Architecture</h2>
+  <p class="sp reveal">Edge-cloud hybrid pipeline on Azure AKS + IoT Hub + Jetson edge nodes. End-to-end AES encryption. MERN stack dashboard. 80% product build complete.</p>
+
+  <div class="arch-g">
+    <div class="astack reveal">
+      <div class="aitem"><div class="an">01</div><div class="ai"><div class="at">Edge Devices</div><div class="ad">CCTV, drones, body cams, vehicles, ground robots</div></div><div class="atag">INPUT</div></div>
+      <div class="aitem"><div class="an">02</div><div class="ai"><div class="at">Gateway (MQTT/HTTP)</div><div class="ad">Stream bus with edge nodes — dedup, integrity repair, quality filter</div></div><div class="atag">GATEWAY</div></div>
+      <div class="aitem"><div class="an">03</div><div class="ai"><div class="at">Edge Processing</div><div class="ad">Anomaly-driven segmentation → precision video cropping → integrity</div></div><div class="atag">PARALLEL</div></div>
+      <div class="aitem"><div class="an">04</div><div class="ai"><div class="at">AI/ML Services</div><div class="ad">PyTorch · YOLOv8 · MTCNN · InceptionResNetV1 · LSTM · DBSCAN</div></div><div class="atag">PyTorch</div></div>
+      <div class="aitem"><div class="an">05</div><div class="ai"><div class="at">LLM Agent</div><div class="ad">LangChain summarization → TTS alerts → mobile API dispatch</div></div><div class="atag">LangChain</div></div>
+      <div class="aitem"><div class="an">06</div><div class="ai"><div class="at">Storage</div><div class="ad">MongoDB incident metadata · Cloudinary/Azure video keyframes</div></div><div class="atag">MongoDB</div></div>
+      <div class="aitem"><div class="an">07</div><div class="ai"><div class="at">Dashboard / Control Room</div><div class="ad">React + Node.js MERN stack · Auth & Security (AES) · Admin panel</div></div><div class="atag">REACT</div></div>
+    </div>
+    <div>
+      <div class="flow-box reveal">
+        <div class="flow-ttl">// Processing Pipeline</div>
+        <div class="flow-body">
+          <div class="frow"><div class="fn">1</div><div class="ft">Ingest streams → <strong>cleansing + dedup + quality filter</strong></div></div>
+          <div class="frow"><div class="fn">2</div><div class="ft"><strong>Pre-filter</strong> → anomaly-driven segmentation (75% frames removed)</div></div>
+          <div class="frow"><div class="fn p">3</div><div class="ft">7 microservices run in <strong style="color:var(--c3)">parallel</strong> via REST APIs on GPU</div></div>
+          <div class="frow"><div class="fn">4</div><div class="ft"><strong>ThreatScore = w₁F + w₂W + w₃B + w₄C</strong> computed</div></div>
+          <div class="frow"><div class="fn r">5</div><div class="ft"><strong style="color:var(--c2)">Threat level assigned</strong> → AI agent generates LLM summary</div></div>
+          <div class="frow"><div class="fn">6</div><div class="ft"><strong>TTS + mobile API</strong> alert dispatched to control room</div></div>
+          <div class="frow"><div class="fn">7</div><div class="ft">Evidence archived → MongoDB/Azure → <strong>React dashboard</strong></div></div>
+          <div class="frow"><div class="fn p">8</div><div class="ft"><strong style="color:var(--c3)">Adaptive feedback loop</strong> retrains models on new data</div></div>
+        </div>
+      </div>
+      <!-- Build Progress -->
+      <div class="prog-wrap reveal" style="margin-top:16px">
+        <div class="prog-lbl">// Build Status — Review 2</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="prog-bar-track" style="flex:1"><div id="prog-bar" class="prog-bar-fill"></div></div>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--c5)">80%</span>
+        </div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--t2);margin-bottom:10px">End-to-end pipeline integrated · All core AI modules operational</div>
+        <div class="prog-grid">
+          <div class="prog-item" style="color:var(--c5)">✓ Face Recognition</div>
+          <div class="prog-item" style="color:var(--c5)">✓ Weapon Detection</div>
+          <div class="prog-item" style="color:var(--c5)">✓ Behavior Anomaly</div>
+          <div class="prog-item" style="color:var(--c5)">✓ Crowd Analytics</div>
+          <div class="prog-item" style="color:var(--c5)">✓ Multi-camera Integration</div>
+          <div class="prog-item" style="color:var(--c5)">✓ Alert & Notification System</div>
+          <div class="prog-item" style="color:var(--c5)">✓ MERN Dashboard</div>
+          <div class="prog-item" style="color:var(--c4)">⟳ AI Agent Adaptive Loop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===RESULTS=== -->
+<section id="results">
+  <div class="sec-chip reveal">Performance Results</div>
+  <h2 class="sh reveal">Experimental Metrics</h2>
+  <p class="sp reveal">Hardware: AMD Ryzen 7 7435HS · NVIDIA RTX 3050 4GB · 16GB RAM · Python 3.12.8 · PyTorch 2.2.2 · YOLOv8 8.3.201</p>
+
+  <div class="perf-r reveal">
+    <div class="pc" style="--pcl:var(--c1);--pca:rgba(0,229,255,.05)"><div class="pn" style="color:var(--c1);text-shadow:0 0 20px rgba(0,229,255,.5)">98%</div><div class="pu">Accuracy</div><div class="pl">Face Recognition</div></div>
+    <div class="pc" style="--pcl:var(--c2);--pca:rgba(255,23,68,.05)"><div class="pn" style="color:var(--c2);text-shadow:0 0 20px rgba(255,23,68,.5)">92.8%</div><div class="pu">mAP@0.5</div><div class="pl">Weapon Detection</div></div>
+    <div class="pc" style="--pcl:var(--c4);--pca:rgba(255,171,0,.05)"><div class="pn" style="color:var(--c4);text-shadow:0 0 20px rgba(255,171,0,.4)">89.7</div><div class="pu">F1 Score</div><div class="pl">Behavior Anomaly</div></div>
+    <div class="pc" style="--pcl:var(--c3);--pca:rgba(213,0,249,.05)"><div class="pn" style="color:var(--c3);text-shadow:0 0 20px rgba(213,0,249,.4)">29 FPS</div><div class="pu">Realtime</div><div class="pl">34ms Per Frame</div></div>
+  </div>
+
+  <div class="charts-g reveal">
+    <div class="cbox">
+      <div class="cboxh">// Model Accuracy Comparison (%)</div>
+      <div class="br"><div class="brl">ArcFace [15]</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#a855f7,#7c3aed)" data-w="99.83"></div></div><div class="brv">99.83%</div></div>
+      <div class="br"><div class="brl">FaceNet [5]</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#3b82f6,#1d4ed8)" data-w="99.63"></div></div><div class="brv">99.63%</div></div>
+      <div class="br"><div class="brl">InceptionResNetV2</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#f59e0b,#d97706)" data-w="98.6"></div></div><div class="brv">98.6%</div></div>
+      <div class="br hi"><div class="brl">SRI (Proposed)</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#00e5ff,#0099cc)" data-w="98"></div></div><div class="brv">98.0% ✦</div></div>
+    </div>
+    <div class="cbox">
+      <div class="cboxh">// Inference Speed — Lower = Better (ms)</div>
+      <div class="br"><div class="brl">ArcFace · 65M params</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#ff1744,#c4001a)" data-w="100"></div></div><div class="brv">72ms</div></div>
+      <div class="br"><div class="brl">InceptionResNetV2 · 56M</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#f59e0b,#d97706)" data-w="94"></div></div><div class="brv">68ms</div></div>
+      <div class="br"><div class="brl">FaceNet · 22M params</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#3b82f6,#1d4ed8)" data-w="67"></div></div><div class="brv">48ms</div></div>
+      <div class="br hi"><div class="brl">SRI · 24M params</div><div class="brt"><div class="brf" style="background:linear-gradient(90deg,#00e5ff,#0099cc)" data-w="47"></div></div><div class="brv">34ms ⚡</div></div>
+    </div>
+  </div>
+
+  <p style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:4px;color:var(--c1);text-transform:uppercase;margin-bottom:12px;" class="reveal">// TABLE I — Face Recognition Performance Metrics (InceptionResNetV1)</p>
+  <div class="comp-w reveal" style="margin-bottom:28px">
+    <table class="comp-t">
+      <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Support</th></tr></thead>
+      <tbody>
+        <tr><td>Person A</td><td style="font-family:'DM Mono',monospace">0.983</td><td style="font-family:'DM Mono',monospace">0.959</td><td style="font-family:'DM Mono',monospace">0.971</td><td style="font-family:'DM Mono',monospace">1236</td></tr>
+        <tr><td>Person B</td><td style="font-family:'DM Mono',monospace">0.994</td><td style="font-family:'DM Mono',monospace">0.965</td><td style="font-family:'DM Mono',monospace">0.979</td><td style="font-family:'DM Mono',monospace">1191</td></tr>
+        <tr><td>Person C</td><td style="font-family:'DM Mono',monospace">0.986</td><td style="font-family:'DM Mono',monospace">0.963</td><td style="font-family:'DM Mono',monospace">0.974</td><td style="font-family:'DM Mono',monospace">1209</td></tr>
+        <tr><td>Unknown</td><td style="font-family:'DM Mono',monospace">0.973</td><td style="font-family:'DM Mono',monospace;color:var(--c5)">0.998</td><td style="font-family:'DM Mono',monospace">0.985</td><td style="font-family:'DM Mono',monospace">3600</td></tr>
+        <tr class="sri"><td>Macro Avg</td><td style="font-family:'DM Mono',monospace">0.984</td><td style="font-family:'DM Mono',monospace">0.971</td><td style="font-family:'DM Mono',monospace">0.977</td><td style="font-family:'DM Mono',monospace">—</td></tr>
+        <tr class="sri"><td>Weighted Avg</td><td style="font-family:'DM Mono',monospace">0.980</td><td style="font-family:'DM Mono',monospace">0.980</td><td style="font-family:'DM Mono',monospace">0.980</td><td style="font-family:'DM Mono',monospace">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:4px;color:var(--c1);text-transform:uppercase;margin-bottom:11px;" class="reveal">// Threat Classification System</p>
+  <div class="thr-r reveal">
+    <div class="tc hi"><div class="tind"></div><div class="tlvl">High Priority</div><div class="tevt">Weapons detected · Violence in progress · Kidnapping attempts<br><br><strong style="color:var(--c2)">→ Immediate alert to control room</strong></div></div>
+    <div class="tc md"><div class="tind"></div><div class="tlvl">Medium Priority</div><div class="tevt">Loitering · Suspicious behavior · Unrecognized identities<br><br><strong style="color:var(--c4)">→ Alert after threshold exceeded</strong></div></div>
+    <div class="tc lo"><div class="tind"></div><div class="tlvl">Low Priority</div><div class="tevt">Normal movement · Authorized identities · Standard crowd density<br><br><strong style="color:var(--c1)">→ Logged silently</strong></div></div>
+  </div>
+
+  <p style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:4px;color:var(--c1);text-transform:uppercase;margin-bottom:4px;margin-top:30px;" class="reveal">// Operator Workload Reduction</p>
+  <div class="red3 reveal">
+    <div class="r3"><div class="r3n" style="color:var(--c1);text-shadow:0 0 28px rgba(0,229,255,.4)">75%</div><div class="r3l">Irrelevant frames filtered during processing</div></div>
+    <div class="r3"><div class="r3n" style="color:var(--c2);text-shadow:0 0 28px rgba(255,23,68,.4)">87%</div><div class="r3l">Reduction in video length for manual review</div></div>
+    <div class="r3"><div class="r3n" style="color:var(--c3);text-shadow:0 0 28px rgba(213,0,249,.4)">61%</div><div class="r3l">Reduction in unnecessary active alerts</div></div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===DEMO=== -->
+<section id="demo">
+  <div class="sec-chip r reveal">AI Detection Showcase</div>
+  <h2 class="sh reveal">Real Detection Outputs</h2>
+  <p class="sp reveal">Live results from SRI across six detection scenarios — criminal identification, weapon spotting, fire detection, loitering, crowd congestion, and AI summarization.</p>
+
+  <div class="demo-g reveal">
+    <!-- Face -->
+    <div class="dcard">
+      <div class="dvis" style="background:linear-gradient(135deg,#020810,#061020)">
+        <div class="corner-brackets"><div class="cb-tl"></div><div class="cb-tr"></div><div class="cb-bl"></div><div class="cb-br"></div></div>
+        <svg width="100%" height="100%" viewBox="0 0 240 150" style="display:block">
+          <rect x="79" y="24" width="82" height="92" rx="3" fill="none" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4,2"><animate attributeName="opacity" values=".5;1;.5" dur="1.4s" repeatCount="indefinite"/></rect>
+          <text x="79" y="18" fill="#00e5ff" font-size="7" font-family="monospace">DETECTED: CONF 0.94</text>
+          <ellipse cx="120" cy="64" rx="25" ry="29" fill="rgba(0,229,255,.04)" stroke="rgba(0,229,255,.18)" stroke-width=".5"/>
+          <circle cx="112" cy="57" r="2.5" fill="rgba(0,229,255,.4)"/><circle cx="128" cy="57" r="2.5" fill="rgba(0,229,255,.4)"/>
+          <path d="M111 76 Q120 83 129 76" fill="none" stroke="rgba(0,229,255,.3)" stroke-width="1"/>
+          <path d="M79,24 L79,18 L85,18" fill="none" stroke="#00e5ff" stroke-width="1.2"/>
+          <path d="M161,24 L161,18 L155,18" fill="none" stroke="#00e5ff" stroke-width="1.2"/>
+          <path d="M79,116 L79,122 L85,122" fill="none" stroke="#00e5ff" stroke-width="1.2"/>
+          <path d="M161,116 L161,122 L155,122" fill="none" stroke="#00e5ff" stroke-width="1.2"/>
+          <!-- Animated scan -->
+          <line x1="79" x2="161" y1="64" y2="64" stroke="rgba(0,229,255,.25)" stroke-width="1"><animate attributeName="y1" values="24;116;24" dur="2s" repeatCount="indefinite"/><animate attributeName="y2" values="24;116;24" dur="2s" repeatCount="indefinite"/></line>
+          <text x="10" y="140" fill="rgba(0,229,255,.55)" font-size="6" font-family="monospace">FPS:28 | CAM_01 | LIVE | AES-ENC</text>
+          <circle cx="7" cy="7" r="3" fill="#00e5ff"><animate attributeName="opacity" values="1;.2;1" dur="1.1s" repeatCount="indefinite"/></circle>
+        </svg>
+        <div class="float-data" style="top:12px;right:12px">ID_MATCH:97%</div>
+        <div class="dov"><div class="dlbl">Face / Missing Detection</div></div>
+        <div class="dbadge db-a">LIVE</div>
+      </div>
+      <div class="ddesc">MTCNN + InceptionResNetV1 open-set face recognition. 7,236-image dataset. 512-dim cosine similarity matching at threshold 0.8.</div>
+    </div>
+
+    <!-- Criminal + Weapon -->
+    <div class="dcard">
+      <div class="dvis" style="background:linear-gradient(135deg,#0f0408,#1a040c)">
+        <div class="corner-brackets"><div class="cb-tl" style="border-color:var(--c2)"></div><div class="cb-tr" style="border-color:var(--c2)"></div><div class="cb-bl" style="border-color:var(--c2)"></div><div class="cb-br" style="border-color:var(--c2)"></div></div>
+        <svg width="100%" height="100%" viewBox="0 0 240 150" style="display:block">
+          <rect x="55" y="18" width="60" height="102" rx="3" fill="none" stroke="#ff1744" stroke-width="1.5"><animate attributeName="stroke-opacity" values=".6;1;.6" dur="1.6s" repeatCount="indefinite"/></rect>
+          <text x="55" y="12" fill="#ff1744" font-size="7" font-family="monospace">CRIMINAL 0.87</text>
+          <rect x="80" y="56" width="46" height="26" rx="2" fill="none" stroke="#ffab00" stroke-width="1.5"><animate attributeName="stroke-opacity" values=".5;1;.5" dur=".85s" repeatCount="indefinite"/></rect>
+          <text x="80" y="51" fill="#ffab00" font-size="7" font-family="monospace">WEAPON 0.92</text>
+          <rect x="145" y="28" width="56" height="94" rx="3" fill="none" stroke="#ff1744" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="145" y="22" fill="#ff1744" font-size="6" font-family="monospace">PERSON 0.79</text>
+          <!-- flashing alert overlay -->
+          <rect x="0" y="0" width="240" height="150" fill="rgba(255,23,68,.04)"><animate attributeName="opacity" values="0;1;0" dur="1.2s" repeatCount="indefinite"/></rect>
+          <text x="10" y="140" fill="rgba(255,23,68,.7)" font-size="6" font-family="monospace">⚠ HIGH THREAT | CAM_03 | ALERT SENT</text>
+          <circle cx="7" cy="7" r="4" fill="#ff1744"><animate attributeName="opacity" values="1;.2;1" dur=".55s" repeatCount="indefinite"/></circle>
+        </svg>
+        <div class="dov"><div class="dlbl">Criminal + Weapon Detection</div></div>
+        <div class="dbadge db-r">⚠ THREAT</div>
+      </div>
+      <div class="ddesc">YOLOv8 simultaneous criminal ID and weapon detection. mAP@0.5: 92.8%. Multi-class confidence scoring with alert dispatch.</div>
+    </div>
+
+    <!-- AI Summary -->
+    <div class="dcard">
+      <div class="dvis" style="background:linear-gradient(135deg,#050810,#080d1c);padding:10px;display:flex;flex-direction:column">
+        <div style="font-family:'DM Mono',monospace;font-size:7px;color:rgba(0,229,255,.5);margin-bottom:6px;letter-spacing:2px;display:flex;align-items:center;gap:6px">
+          <span style="width:5px;height:5px;background:var(--c2);border-radius:50%;display:inline-block;box-shadow:0 0 6px var(--c2)"></span>
+          AI INCIDENT REPORT · CNS1541
+        </div>
+        <div style="font-size:8px;color:rgba(240,249,255,.7);line-height:1.9;font-family:'DM Mono',monospace">
+          <span style="color:#ff1744">● HIGH ALERT</span> Camera_B3 14:32:07<br>
+          Objects: <span style="color:#00e5ff">9 persons detected</span><br>
+          Incidents: <span style="color:#ff1744">10 alerts triggered</span><br>
+          <span style="color:#ffab00">Key Findings:</span><br>
+          · Suspicious activity pattern<br>
+          · Weapon-like object observed<br>
+          · Abnormal crowd behavior<br>
+          <span style="color:#00e676">Confidence: 94.7% | AES-256</span><br>
+          <span style="color:rgba(255,255,255,.35)">ID: #INC_2891 | LangChain LLM</span>
+        </div>
+        <div style="margin-top:auto;border-top:1px solid rgba(0,229,255,.1);padding-top:5px;font-family:'DM Mono',monospace;font-size:6px;color:rgba(0,229,255,.35);display:flex;gap:8px">
+          <span>EVIDENCE ARCHIVED</span><span>→ MONGODB</span><span>→ AZURE</span>
+        </div>
+        <div class="dov" style="background:linear-gradient(to top,rgba(3,6,15,.88) 0%,transparent 40%)"><div class="dlbl">AI Summarization (LLM)</div></div>
+        <div class="dbadge db-a">LLM</div>
+      </div>
+      <div class="ddesc">LangChain + LLM generates structured incident reports. Evidence archiving to MongoDB. Reduces manual review by 87%.</div>
+    </div>
+
+    <!-- Loitering -->
+    <div class="dcard">
+      <div class="dvis" style="background:linear-gradient(135deg,#0a0e06,#131a08)">
+        <div class="corner-brackets"><div class="cb-tl" style="border-color:var(--c4)"></div><div class="cb-tr" style="border-color:var(--c4)"></div><div class="cb-bl" style="border-color:var(--c4)"></div><div class="cb-br" style="border-color:var(--c4)"></div></div>
+        <svg width="100%" height="100%" viewBox="0 0 240 150" style="display:block">
+          <rect x="28" y="28" width="184" height="92" rx="4" fill="rgba(255,171,0,.03)" stroke="rgba(255,171,0,.35)" stroke-width="1" stroke-dasharray="5,3"/>
+          <text x="32" y="22" fill="rgba(255,171,0,.7)" font-size="7" font-family="monospace">ROI ZONE — ACTIVE MONITORING</text>
+          <rect x="90" y="46" width="34" height="58" rx="3" fill="none" stroke="#ffab00" stroke-width="1.5"><animate attributeName="stroke-width" values="1.5;2.5;1.5" dur="1.5s" repeatCount="indefinite"/></rect>
+          <text x="90" y="41" fill="#ffab00" font-size="7" font-family="monospace">LOITERING</text>
+          <text x="90" y="114" fill="#ffab00" font-size="8" font-family="monospace">T: 4m 32s</text>
+          <!-- motion trail dots -->
+          <circle cx="100" cy="79" r="2" fill="rgba(255,171,0,.7)"/><circle cx="108" cy="84" r="2" fill="rgba(255,171,0,.5)"/>
+          <circle cx="95" cy="90" r="2" fill="rgba(255,171,0,.3)"/><circle cx="112" cy="74" r="2" fill="rgba(255,171,0,.45)"/>
+          <text x="10" y="140" fill="rgba(255,171,0,.6)" font-size="6" font-family="monospace">THRESHOLD: 3min | RULE-BASED | MEDIUM ALERT</text>
+        </svg>
+        <div class="dov"><div class="dlbl">Loitering Detection</div></div>
+        <div class="dbadge db-w">⚑ MEDIUM</div>
+      </div>
+      <div class="ddesc">ROI zone time-threshold analysis. OpenCV pose estimation + rule-based temporal reasoning. Precision 91.3% on 3,500 labeled frames.</div>
+    </div>
+
+    <!-- Accident + Fire -->
+    <div class="dcard">
+      <div class="dvis" style="background:linear-gradient(135deg,#0f0a02,#1a1204)">
+        <svg width="100%" height="100%" viewBox="0 0 240 150" style="display:block">
+          <rect x="118" y="38" width="92" height="72" rx="3" fill="none" stroke="#ffab00" stroke-width="2"><animate attributeName="stroke-opacity" values=".6;1;.6" dur=".7s" repeatCount="indefinite"/></rect>
+          <text x="118" y="32" fill="#ffab00" font-size="7" font-family="monospace">FIRE 0.57</text>
+          <!-- animated flame -->
+          <path d="M145 105 Q150 72 155 82 Q160 60 165 76 Q170 50 175 71 Q180 86 172 105 Z" fill="rgba(255,171,0,.2)" stroke="rgba(255,100,0,.5)" stroke-width=".7">
+            <animate attributeName="d" values="M145 105 Q150 72 155 82 Q160 60 165 76 Q170 50 175 71 Q180 86 172 105 Z;M147 105 Q151 70 156 84 Q161 58 166 78 Q171 48 176 73 Q181 88 170 105 Z;M145 105 Q150 72 155 82 Q160 60 165 76 Q170 50 175 71 Q180 86 172 105 Z" dur=".4s" repeatCount="indefinite"/>
+          </path>
+          <rect x="18" y="48" width="88" height="56" rx="3" fill="none" stroke="#ff1744" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <text x="18" y="42" fill="#ff1744" font-size="7" font-family="monospace">ACCIDENT 98.66%</text>
+          <text x="10" y="140" fill="rgba(255,100,0,.7)" font-size="6" font-family="monospace">MULTI-CLASS | LSTM TEMPORAL | HIGH PRIORITY</text>
+          <circle cx="7" cy="7" r="3.5" fill="#ff1744"><animate attributeName="opacity" values="1;.15;1" dur=".7s" repeatCount="indefinite"/></circle>
+        </svg>
+        <div class="dov"><div class="dlbl">Accident + Fire Detection</div></div>
+        <div class="dbadge db-r">🔥 ALERT</div>
+      </div>
+      <div class="ddesc">LSTM temporal model detects accident sequences and fire propagation. 98.66% accident confidence. Simultaneous multi-class detection.</div>
+    </div>
+
+    <!-- Crowd Congestion -->
+    <div class="dcard">
+      <div class="dvis" style="background:linear-gradient(135deg,#040610,#080b1a)">
+        <svg width="100%" height="100%" viewBox="0 0 240 150" style="display:block">
+          <circle cx="120" cy="75" r="55" fill="rgba(255,23,68,.05)" stroke="rgba(255,23,68,.1)" stroke-width=".5"/>
+          <circle cx="120" cy="75" r="36" fill="rgba(255,23,68,.08)" stroke="rgba(255,23,68,.2)" stroke-width=".5"/>
+          <circle cx="120" cy="75" r="18" fill="rgba(255,23,68,.15)" stroke="rgba(255,23,68,.4)" stroke-width=".5"/>
+          <!-- person dots -->
+          <circle cx="108" cy="70" r="4" fill="rgba(0,229,255,.85)"/><circle cx="118" cy="67" r="4" fill="rgba(0,229,255,.85)"/>
+          <circle cx="128" cy="72" r="4" fill="rgba(0,229,255,.85)"/><circle cx="113" cy="80" r="4" fill="rgba(0,229,255,.85)"/>
+          <circle cx="123" cy="78" r="4" fill="rgba(0,229,255,.85)"/><circle cx="133" cy="64" r="4" fill="rgba(0,229,255,.6)"/>
+          <circle cx="103" cy="78" r="4" fill="rgba(0,229,255,.6)"/>
+          <rect x="8" y="7" width="96" height="17" rx="3" fill="rgba(255,23,68,.14)" stroke="rgba(255,23,68,.4)" stroke-width=".5"/>
+          <text x="14" y="18" fill="#ff1744" font-size="8" font-family="monospace">Detections: 22</text>
+          <rect x="8" y="28" width="132" height="13" rx="3" fill="rgba(255,23,68,.09)"/>
+          <text x="14" y="38" fill="#ffab00" font-size="7" font-family="monospace">CROWD CONGESTION DETECTED!</text>
+          <text x="10" y="140" fill="rgba(0,229,255,.55)" font-size="6" font-family="monospace">DBSCAN CLUSTER | DENSITY: HIGH | ALERT</text>
+        </svg>
+        <div class="dov"><div class="dlbl">Crowd Congestion Detection</div></div>
+        <div class="dbadge db-r">⚠ 22 Detected</div>
+      </div>
+      <div class="ddesc">YOLOv8 + DBSCAN centroid clustering. 92.4% accuracy. Cross-frame tracking, multi-level classification: sparse / moderate / crowded.</div>
+    </div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===VIDEO=== -->
+<section style="text-align:center">
+  <div class="sec-chip r reveal" style="display:inline-flex">System Demo</div>
+  <h2 class="sh reveal">Watch SRI In Action</h2>
+  <div class="vid-wrap reveal" id="vid-wrapper">
+    <!-- Try embedding Google Drive video as iframe -->
+    <div class="vid-fallback" id="vid-fallback">
+      <div class="vid-play-btn" onclick="openDemo()">▶</div>
+      <div class="vid-t">SRI — Full System Demo</div>
+      <div class="vid-s">TEAM BLACK-SQUAD · NANDHA ENGINEERING COLLEGE · CSE</div>
+      <div style="margin-top:16px;font-family:'DM Mono',monospace;font-size:9px;color:rgba(0,229,255,.5);letter-spacing:2px">Click to open in Google Drive</div>
+    </div>
+  </div>
+  <div style="margin-top:14px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+    <a href="https://drive.google.com/file/d/1MlKUnSbQMJxmS6oi0cq0jXCrocd5IgAY/view?usp=sharing" target="_blank" class="btn-hero bh-red" style="font-size:9px;padding:10px 22px">▶ Open Full Demo</a>
+    <a href="https://github.com/Naveenkumar7125/SRI-V1.git" target="_blank" class="btn-hero bh-main" style="font-size:9px;padding:10px 22px"><span>⟨/⟩ GitHub Source</span></a>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===PUBLICATIONS=== -->
+<section id="pub">
+  <div class="sec-chip g reveal">Research & Publications</div>
+  <h2 class="sh reveal">Academic Contributions</h2>
+  <p class="sp reveal">Two IEEE conference papers accepted (ICC-CNS 2026 & ICETM 2026) and Indian Patent filed — establishing SRI as a research-backed, IP-protected surveillance framework.</p>
+
+  <div class="pub-grid reveal">
+    <!-- ICC-CNS Paper -->
+    <div class="pub-card" style="--pclr:var(--c3)">
+      <div class="pub-type pt-conf">⊕ IEEE Conference Paper</div>
+      <div class="pub-title">Real-Time Surveillance and Threat Detection Using a Multi-Modal Deep Learning Framework</div>
+      <div class="pub-authors">T. Rajasekaran · K. U. Ranjith · S. P. Dhamodharan · M. Hanushree · T. Naveenkumar</div>
+      <div class="pub-venue">ICC-CNS 2026 · Vignan's Foundation for Science, Technology and Research · Guntur, India · June 11–13, 2026</div>
+      <div class="pub-badges">
+        <span class="pbadge pb-acc">✓ Accepted</span>
+        <span class="pbadge pb-ieee">IEEE Xplore</span>
+        <span class="pbadge" style="background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.4);color:var(--c1);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">Paper ID: CNS1541</span>
+        <span class="pbadge" style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.3);color:var(--t2);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">4% Similarity</span>
+      </div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <a href="https://drive.google.com/uc?export=download&id=1BN3e21Y2Mh1LeFeP-B4ff0rYRPCLoRgh" target="_blank" class="pub-btn pb-dl">↓ Download Paper</a>
+        <a href="https://vignan.ac.in/icc-cns2026" target="_blank" class="pub-btn pb-ext">Conference ↗</a>
+      </div>
+    </div>
+
+    <!-- Patent -->
+    <div class="pub-card" style="--pclr:var(--c4)">
+      <div class="pub-type pt-pat">⚑ Indian Patent Application</div>
+      <div class="pub-title">Edge Based Unified AI Agent for Autonomous Surveillance Behaviour Analysis and Risk Driven Response</div>
+      <div class="pub-authors">Dr. T. Rajasekaran · S. P. Dhamodharan · M. Hanushree · T. Naveen Kumar · A. Kishore Abinash · R. Monika · S. Kaviya</div>
+      <div class="pub-venue">Applicant: Nandha Engineering College, Erode · Filed: 02/12/2025 · Published: Patent Office Journal No. 05/2026 dated 30/01/2026</div>
+      <div class="pub-badges">
+        <span class="pbadge pb-ind">App No. 202541120600 A</span>
+        <span class="pbadge" style="background:rgba(255,171,0,.12);border:1px solid rgba(255,171,0,.4);color:var(--c4);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">7 Claims · 10 Pages</span>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);line-height:1.7;margin-bottom:12px">IPC: G06V 20/52 · G06N 3/08 · G06N 3/04 · G06V 10/764 · G06K 9/00</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <a href="SRI_Patent_202541120600.pdf" download class="pub-btn pb-dl">↓ Download Patent</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ICETM 2026 — TWO Papers -->
+  <div style="margin-bottom:18px" class="reveal">
+    <div style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:4px;color:var(--c5);text-transform:uppercase;margin-bottom:12px">// ICETM 2026 — Two Papers Accepted</div>
+    <div class="pub-grid">
+      <div class="pub-card" style="--pclr:var(--c5)">
+        <div class="pub-type pt-conf2">✓ IEEE ICETM 2026 · Paper 1</div>
+        <div class="pub-title">A Deep Learning-Based Microservices Architecture for AI-Driven Video Analysis and Semantic Interpretation</div>
+        <div class="pub-authors">Hanushree M et al.</div>
+        <div class="pub-venue">2nd International Conference on Engineering, Technology & Management (ICETM) 2026 · Amity University, Oakdale Campus, Long Island, USA · May 13–14, 2026</div>
+        <div class="pub-badges">
+          <span class="pbadge pb-acc">✓ Accepted</span>
+          <span class="pbadge" style="background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.35);color:var(--c1);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">Submission ID: 175</span>
+          <span class="pbadge" style="background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);color:var(--t2);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">🇺🇸 USA Conference</span>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <a href="ICETM_175.pdf" download class="pub-btn pb-dl">↓ Download Paper</a>
+          <a href="https://amity.edu/eventspg/noida/ICETM2026/" target="_blank" class="pub-btn pb-reg">Register ↗</a>
+        </div>
+      </div>
+      <div class="pub-card" style="--pclr:var(--c5)">
+        <div class="pub-type pt-conf2">✓ IEEE ICETM 2026 · Paper 2</div>
+        <div class="pub-title">A Deep Learning Based AI Model for Real-Time Face Recognition and Threat Response in Public Safety</div>
+        <div class="pub-authors">Hanushree M et al.</div>
+        <div class="pub-venue">2nd International Conference on Engineering, Technology & Management (ICETM) 2026 · Amity University, Oakdale Campus, Long Island, USA · May 13–14, 2026</div>
+        <div class="pub-badges">
+          <span class="pbadge pb-acc">✓ Accepted</span>
+          <span class="pbadge" style="background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.35);color:var(--c1);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">Submission ID: 176</span>
+          <span class="pbadge" style="background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);color:var(--t2);font-family:'DM Mono',monospace;font-size:8px;padding:2px 9px;border-radius:3px">🇺🇸 USA Conference</span>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <a href="ICETM_176.pdf" download class="pub-btn pb-dl">↓ Download Paper</a>
+          <a href="https://amity.edu/eventspg/noida/ICETM2026/" target="_blank" class="pub-btn pb-reg">Register ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ICC-CNS Acceptance Card -->
+  <div class="acc-box reveal">
+    <div class="acc-header">
+      <div>
+        <div class="acc-title">✓ ICC-CNS 2026 — Vignan's University</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--t2);margin-top:5px">From: icccns@vignan.ac.in · April 16, 2026 · Paper ID: CNS1541</div>
+      </div>
+      <span class="acc-badge">ACCEPTED</span>
+    </div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--t2);line-height:1.7">
+      Paper <strong style="color:var(--c5)">"Real-Time Surveillance and Threat Detection Using a Multi-Modal Deep Learning Framework"</strong> accepted for presentation and publication in ICC-CNS 2026.
+    </div>
+    <div class="acc-meta">
+      <div class="acc-m"><div class="acc-mk">Date</div><div class="acc-mv">June 11–13, 2026</div></div>
+      <div class="acc-m"><div class="acc-mk">Location</div><div class="acc-mv">Vignan's Foundation, Guntur, AP</div></div>
+      <div class="acc-m"><div class="acc-mk">Turnitin</div><div class="acc-mv" style="color:var(--c5)">4% Similarity — Clean</div></div>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--c5);letter-spacing:2px;margin-top:10px">// 5 Authors · Nandha Engineering College (CSE)</div>
+  </div>
+
+  <!-- ICETM USA Acceptance Card -->
+  <div class="icetm-box reveal">
+    <div class="icetm-head">
+      <div class="icetm-flag">🇺🇸</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--c1);text-transform:uppercase">ICETM 2026 — Amity University, USA</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--t2);margin-top:3px">Physical Conference · Oakdale Campus · Long Island, New York · May 13–14, 2026</div>
+      </div>
+      <span class="icetm-badge">2 PAPERS ACCEPTED</span>
+    </div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:12px">
+      Both papers accepted for presentation at the 2nd International Conference on Engineering, Technology & Management 2026. IEEE Xplore publication pending camera-ready submission. Conference to be held in physical mode.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div class="acc-m" style="border-color:rgba(0,229,255,.15)"><div class="acc-mk" style="color:var(--c1)">Sub ID 175</div><div class="acc-mv">Microservices Architecture</div></div>
+      <div class="acc-m" style="border-color:rgba(0,229,255,.15)"><div class="acc-mk" style="color:var(--c1)">Sub ID 176</div><div class="acc-mv">Face Recognition & Threat</div></div>
+      <div class="acc-m" style="border-color:rgba(0,229,255,.15)"><div class="acc-mk" style="color:var(--c1)">Format</div><div class="acc-mv">IEEE Xplore · 979-8-3315-5986-1</div></div>
+    </div>
+    <a href="https://amity.edu/eventspg/noida/ICETM2026/" target="_blank" class="pub-btn pb-reg" style="display:inline-flex">Register for ICETM 2026 ↗</a>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===FEASIBILITY=== -->
+<section id="feasibility">
+  <div class="sec-chip g reveal">Feasibility & Viability</div>
+  <h2 class="sh reveal">Challenge → Strategy Matrix</h2>
+  <p class="sp reveal">SRI is highly feasible and future-ready with quantified efficiency gains across every operational challenge.</p>
+  <div class="feas-g reveal">
+    <div class="ctbl">
+      <div class="ctbl-h"><div class="ctbl-hd">Challenge</div><div class="ctbl-hd">Strategy</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Data Overload</div><div class="ctbl-s">Event-driven, frame-sampled processing</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Scalability</div><div class="ctbl-s">Edge–cloud hybrid (Azure AKS)</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Privacy & Ethics</div><div class="ctbl-s">Facial anonymization & NSG-compliant policies</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Alert Fatigue</div><div class="ctbl-s">Priority-based alerts & smart grouping</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Real-time Bottlenecks</div><div class="ctbl-s">Lightweight edge detection & parallel GPU inference</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">False Positives</div><div class="ctbl-s">Multi-modal cross-validation (ThreatScore fusion)</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Data Security</div><div class="ctbl-s">End-to-end AES-256 encryption</div></div>
+      <div class="ctbl-r"><div class="ctbl-c">Multi-source Sync</div><div class="ctbl-s">Timestamp indexing & metadata tagging</div></div>
+    </div>
+    <div class="fn-g">
+      <div class="fnc"><div class="fnn" style="color:var(--c1);text-shadow:0 0 18px rgba(0,229,255,.4)">97%</div><div class="fnl">Compute reduction via event-driven processing</div></div>
+      <div class="fnc"><div class="fnn" style="color:var(--c2);text-shadow:0 0 18px rgba(255,23,68,.4)">80%</div><div class="fnl">GPU/CPU cost cuts via intelligent frame sampling</div></div>
+      <div class="fnc"><div class="fnn" style="color:var(--c4)">70%</div><div class="fnl">More cameras supported without extra hardware</div></div>
+      <div class="fnc"><div class="fnn" style="color:var(--c3)">75%</div><div class="fnl">Data redundancy minimized via event filtering</div></div>
+      <div class="fnc" style="grid-column:span 2"><div class="fnn" style="color:var(--c5);text-shadow:0 0 18px rgba(0,230,118,.4)">2–3×</div><div class="fnl">Faster incident detection for long-term efficiency</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===COMPARISON=== -->
+<section>
+  <div class="sec-chip a reveal">Competitive Analysis</div>
+  <h2 class="sh reveal">SRI vs Existing Systems</h2>
+  <div class="comp-w reveal">
+    <table class="comp-t">
+      <thead><tr><th>Feature</th><th>SRI ✦</th><th>IIT Bombay</th><th>Proactive CCTV</th><th>UP Prisons (JARVIS)</th><th>Vindhyachal</th><th>Indian Railways AI</th></tr></thead>
+      <tbody>
+        <tr class="sri"><td>Event-Driven Processing</td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+        <tr><td>AI Agent Autonomous Alerts</td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cp">Partial</span></td></tr>
+        <tr><td>Anomaly / Violence Detection</td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td></tr>
+        <tr><td>Fire / Weapon Detection</td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="cp">Partial</span></td><td><span class="cp">Partial</span></td><td><span class="cp">Partial</span></td><td><span class="cx">✗</span></td></tr>
+        <tr><td>Facial Recognition</td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="ck">✓</span></td><td><span class="cx">✗</span></td></tr>
+        <tr class="sri"><td>Automated Text Summarization</td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+        <tr class="sri"><td>Cost Efficiency (Frame Sampling)</td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===TECH STACK=== -->
+<section>
+  <div class="sec-chip reveal">Technology Stack</div>
+  <h2 class="sh reveal">Built With</h2>
+  <div class="tech-g reveal">
+    <div class="tch"><div class="tcn">YOLOv8</div><div class="tcr">Object Detection</div></div>
+    <div class="tch"><div class="tcn">MTCNN</div><div class="tcr">Face Detection</div></div>
+    <div class="tch"><div class="tcn" style="color:var(--c3)">InceptionResNetV1</div><div class="tcr">Face Embeddings</div></div>
+    <div class="tch"><div class="tcn">LSTM</div><div class="tcr">Temporal Analysis</div></div>
+    <div class="tch"><div class="tcn" style="color:var(--c2)">DBSCAN</div><div class="tcr">Crowd Clustering</div></div>
+    <div class="tch"><div class="tcn">PyTorch 2.2.2</div><div class="tcr">AI Framework</div></div>
+    <div class="tch"><div class="tcn">LangChain</div><div class="tcr">LLM Agent</div></div>
+    <div class="tch"><div class="tcn">OpenCV 4.12</div><div class="tcr">Video Processing</div></div>
+    <div class="tch"><div class="tcn" style="color:var(--c3)">React / MERN</div><div class="tcr">Dashboard</div></div>
+    <div class="tch"><div class="tcn" style="color:var(--c5)">MongoDB</div><div class="tcr">Incident Storage</div></div>
+    <div class="tch"><div class="tcn">Azure AKS</div><div class="tcr">Cloud Deploy</div></div>
+    <div class="tch"><div class="tcn">IoT Hub</div><div class="tcr">Device Mgmt</div></div>
+    <div class="tch"><div class="tcn">Jetson</div><div class="tcr">Edge Inference</div></div>
+    <div class="tch"><div class="tcn" style="color:var(--c4)">Twilio</div><div class="tcr">Alert Dispatch</div></div>
+    <div class="tch"><div class="tcn">AES-256</div><div class="tcr">Encryption</div></div>
+    <div class="tch"><div class="tcn">VGGFace2</div><div class="tcr">Face Dataset</div></div>
+    <div class="tch"><div class="tcn">NumPy/Pandas</div><div class="tcr">Data Analysis</div></div>
+    <div class="tch"><div class="tcn">SciPy/Sklearn</div><div class="tcr">Evaluation</div></div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===TEAM=== -->
+<section id="team">
+  <div class="sec-chip p reveal">Meet The Team</div>
+  <h2 class="sh reveal">Team BLACK-SQUAD</h2>
+  <p class="sp reveal">Nandha Engineering College (Autonomous) · Department of Computer Science and Engineering · Erode, Tamil Nadu</p>
+
+  <!-- HOD / Main Guide -->
+  <div class="mentor-b reveal" style="border-color:rgba(213,0,249,.4);background:linear-gradient(135deg,rgba(213,0,249,.05),rgba(213,0,249,.02))">
+    <div class="mentor-av" style="background:linear-gradient(135deg,#d500f9,#6200ea)">TR</div>
+    <div style="flex:1">
+      <div class="mentor-n">Dr. T. Rajasekaran</div>
+      <div class="mentor-t">// Head of Department · AP/CSE · Main Guide</div>
+      <div class="mentor-d">Nandha Engineering College, Erode · Research Lead, SRI Project</div>
+      <span class="guide-badge-hod">HEAD OF DEPARTMENT</span>
+      <span class="guide-badge-hod" style="margin-left:6px;background:rgba(255,171,0,.12);border-color:rgba(255,171,0,.4);color:var(--c4)">MAIN GUIDE</span>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--c3);border:1px solid rgba(213,0,249,.3);padding:8px 13px;border-radius:8px;text-align:center">
+      <div style="font-size:11px;font-weight:700;margin-bottom:3px">CO-AUTHOR</div>
+      <div>ICC-CNS 2026</div>
+    </div>
+  </div>
+
+  <!-- Co-Guide -->
+  <div class="mentor-b reveal">
+    <div class="mentor-av">RK</div>
+    <div style="flex:1">
+      <div class="mentor-n">Ranjith K U</div>
+      <div class="mentor-t">// Project Co-Guide · AP/CSE</div>
+      <div class="mentor-d">Nandha Engineering College, Erode · ranjithudhay1997@gmail.com</div>
+      <span class="guide-badge-hod" style="background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.35);color:var(--c1)">CO-GUIDE</span>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--c1);border:1px solid rgba(0,229,255,.28);padding:8px 13px;border-radius:8px;text-align:center">
+      <div style="font-size:11px;font-weight:700;margin-bottom:3px">CO-AUTHOR</div>
+      <div>ICC-CNS 2026</div>
+    </div>
+  </div>
+
+  <div class="team-g reveal">
+    <div class="team-c">
+      <div class="team-av" style="background:linear-gradient(135deg,var(--c1),#006080)">NT</div>
+      <div class="team-n">Naveenkumar T</div>
+      <div class="team-r">// Lead of System</div>
+      <div class="team-id">22CS054</div>
+      <div class="team-lead-badge">SYSTEM LEAD</div>
+    </div>
+    <div class="team-c">
+      <div class="team-av" style="background:linear-gradient(135deg,var(--c3),#6200ea)">DS</div>
+      <div class="team-n">Dhamodharan S P</div>
+      <div class="team-r">// Lead Developer</div>
+      <div class="team-id">22CS018</div>
+    </div>
+    <div class="team-c">
+      <div class="team-av" style="background:linear-gradient(135deg,var(--c2),#880e4f)">MH</div>
+      <div class="team-n">Hanushree M</div>
+      <div class="team-r">// AI/ML Engineer</div>
+      <div class="team-id">22CS029</div>
+    </div>
+  </div>
+</section>
+
+<div class="hr-g"></div>
+
+<!-- ===CONCLUSION=== -->
+<section>
+  <div class="sec-chip reveal" style="display:inline-flex">Conclusion</div>
+  <div class="usp-b reveal">
+    <div class="usp-t">SRI Framework</div>
+    <div class="usp-s">An integrated multi-modal AI surveillance framework combining face recognition, weapon detection, behavioral anomaly analysis, and crowd monitoring into a single real-time microservice pipeline — backed by two IEEE publications and an Indian patent.</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="https://drive.google.com/file/d/1MlKUnSbQMJxmS6oi0cq0jXCrocd5IgAY/view?usp=sharing" target="_blank" class="btn-hero bh-red">▶ Full Demo</a>
+      <a href="https://drive.google.com/uc?export=download&id=1BN3e21Y2Mh1LeFeP-B4ff0rYRPCLoRgh" target="_blank" class="btn-hero bh-grn">↓ IEEE Paper</a>
+      <a href="https://github.com/Naveenkumar7125/SRI-V1.git" target="_blank" class="btn-hero bh-main"><span>GitHub Source</span></a>
+    </div>
+  </div>
+  <div class="channels reveal">
+    <div class="chi"><div class="cdot"></div>Urban monitoring and public safety</div>
+    <div class="chi"><div class="cdot"></div>Passenger surveillance & threat detection</div>
+    <div class="chi"><div class="cdot"></div>Traffic incident detection & flow analysis</div>
+    <div class="chi"><div class="cdot"></div>Crowd monitoring at events</div>
+    <div class="chi"><div class="cdot"></div>Defense and law enforcement</div>
+    <div class="chi"><div class="cdot"></div>Corporate & industrial premises security</div>
+  </div>
+</section>
+
+<!-- ===FOOTER=== -->
+<footer>
+  <div>
+    <div class="ft-b">BLACK-SQUAD</div>
+    <div class="ft-i">
+      Sentinel Reconnaissance Intelligence<br>
+      Nandha Engineering College · Dept. CSE · Erode, Tamil Nadu
+    </div>
+  </div>
+  <div class="ft-ls">
+    <a href="https://drive.google.com/file/d/1MlKUnSbQMJxmS6oi0cq0jXCrocd5IgAY/view?usp=sharing" target="_blank" class="ftl r">▶ Demo</a>
+    <a href="https://drive.google.com/uc?export=download&id=1BN3e21Y2Mh1LeFeP-B4ff0rYRPCLoRgh" target="_blank" class="ftl g">↓ Paper</a>
+    <a href="https://github.com/Naveenkumar7125/SRI-V1.git" target="_blank" class="ftl">⟨/⟩ GitHub</a>
+    <a href="https://amity.edu/eventspg/noida/ICETM2026/" target="_blank" class="ftl" style="color:var(--c5);border-color:rgba(0,230,118,.35)">🎓 ICETM 2026</a>
+  </div>
+</footer>
+
+<!-- ======= SCRIPTS ======= -->
+<script>
+// THREE.JS BACKGROUND
+(function initThree(){
+  const canvas = document.getElementById('three-bg');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.z = 28;
+
+  // Particle field
+  const N = 700;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(N*3);
+  const col = new Float32Array(N*3);
+  const colors = [[0,.9,1],[1,.07,.27],[.83,0,.98],[1,.67,0],[0,.9,.46]];
+  for(let i=0;i<N;i++){
+    pos[i*3]=   (Math.random()-0.5)*80;
+    pos[i*3+1]= (Math.random()-0.5)*60;
+    pos[i*3+2]= (Math.random()-0.5)*40;
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2];
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+  const mat = new THREE.PointsMaterial({size:.08,vertexColors:true,transparent:true,opacity:.65});
+  const particles = new THREE.Points(geo,mat);
+  scene.add(particles);
+
+  // Floating wireframe sphere
+  const sGeo = new THREE.IcosahedronGeometry(7,1);
+  const sMat = new THREE.MeshBasicMaterial({color:0x00e5ff,wireframe:true,transparent:true,opacity:.04});
+  const sphere = new THREE.Mesh(sGeo,sMat);
+  scene.add(sphere);
+
+  // Torus
+  const tGeo = new THREE.TorusGeometry(14,0.05,8,120);
+  const tMat = new THREE.MeshBasicMaterial({color:0x00e5ff,transparent:true,opacity:.06});
+  const torus = new THREE.Mesh(tGeo,tMat);
+  torus.rotation.x = Math.PI/3;
+  scene.add(torus);
+
+  const torus2 = new THREE.Mesh(
+    new THREE.TorusGeometry(10,0.04,8,100),
+    new THREE.MeshBasicMaterial({color:0xff1744,transparent:true,opacity:.04})
+  );
+  torus2.rotation.x = -Math.PI/5; torus2.rotation.z = Math.PI/6;
+  scene.add(torus2);
+
+  // Mouse parallax
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2});
+
+  let t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    t+=0.004;
+    particles.rotation.y += 0.0008; particles.rotation.x += 0.0003;
+    sphere.rotation.y += 0.003; sphere.rotation.x += 0.001;
+    torus.rotation.z += 0.002; torus2.rotation.z -= 0.0015;
+    // Parallax
+    camera.position.x += (mx*1.5 - camera.position.x)*.04;
+    camera.position.y += (-my*1.5 - camera.position.y)*.04;
+    camera.lookAt(scene.position);
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+// ---- CURSOR ----
+const cur=document.getElementById('cur'),curR=document.getElementById('curR');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function tick(){rx+=(mx-rx)*.11;ry+=(my-ry)*.11;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(tick)})();
+document.querySelectorAll('a,button,[data-tilt]').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='20px';cur.style.height='20px';cur.style.background='var(--c2)';curR.style.borderColor='rgba(255,23,68,.7)'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='12px';cur.style.height='12px';cur.style.background='var(--c1)';curR.style.borderColor='rgba(0,229,255,.5)'});
+});
+
+// ---- THEME ----
+document.getElementById('themeBtn').addEventListener('click',function(){
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  this.textContent=d?'☽':'☾';
+});
+
+// ---- 3D TILT ----
+document.querySelectorAll('[data-tilt]').forEach(c=>{
+  c.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    c.style.transform=`perspective(700px) rotateX(${-y*14}deg) rotateY(${x*14}deg) translateZ(10px)`;
+    c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+    c.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+  });
+  c.addEventListener('mouseleave',()=>c.style.transform='perspective(700px) rotateX(0) rotateY(0) translateZ(0)');
+});
+
+// ---- SCROLL REVEAL ----
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('in'),i*60)});
+},{threshold:.06,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ---- BARS ----
+const bObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting)e.target.querySelectorAll('.brf[data-w]').forEach(b=>setTimeout(()=>{b.style.width=b.dataset.w+'%'},200));
+  });
+},{threshold:.25});
+document.querySelectorAll('.charts-g').forEach(el=>bObs.observe(el));
+
+// ---- PROGRESS BAR ----
+const pbObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){document.getElementById('prog-bar').style.width='80%';pbObs.disconnect()}});
+},{threshold:.4});
+const pb=document.getElementById('prog-bar');
+if(pb)pbObs.observe(pb.parentElement.parentElement);
+
+// ---- COUNTERS ----
+function animNum(el,target,sfx,decimals=0){
+  let c=0;const inc=target/90;
+  const step=()=>{c=Math.min(c+inc,target);el.textContent=c.toFixed(decimals)+sfx;if(c<target)requestAnimationFrame(step)};
+  step();
+}
+const cObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      animNum(document.getElementById('cnt1'),98,'%');
+      animNum(document.getElementById('cnt2'),92.8,'%',1);
+      animNum(document.getElementById('cnt3'),3,'×');
+      animNum(document.getElementById('cnt4'),97,'%');
+      animNum(document.getElementById('cnt5'),80,'%');
+      cObs.disconnect();
+    }
+  });
+},{threshold:.5});
+const hs=document.querySelector('.hero-stats');
+if(hs)cObs.observe(hs);
+
+// ---- DEMO VIDEO ----
+function openDemo(){
+  window.open('https://drive.google.com/file/d/1MlKUnSbQMJxmS6oi0cq0jXCrocd5IgAY/view?usp=sharing','_blank');
+}
+
+
+</script>
+</body>
+</html>
